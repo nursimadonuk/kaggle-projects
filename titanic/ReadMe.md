@@ -1,9 +1,9 @@
-# Titanic.pdf explanation of project
+Titanic.pdf explanation of project
 #
-# Classification.ipynb code
+Classification.ipynb code
 #
-# train.csv training set data
+train.csv training set data
 #
-# test.csv test set data
+test.csv test set data
 #
-# prediction.csv my predictions
+prediction.csv my predictions
