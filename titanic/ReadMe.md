@@ -1,9 +1,11 @@
-Titanic.pdf explanation of project
+# What is in the files
 #
-Classification.ipynb code
+Titanic.pdf -  explanation of project
 #
-train.csv training set data
+Classification.ipynb -  code
 #
-test.csv test set data
+train.csv - training set data
 #
-prediction.csv my predictions
+test.csv test - set data
+#
+prediction.csv - my predictions
