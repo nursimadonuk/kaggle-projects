@@ -1,0 +1,243 @@
+---
+title: "Case Study 1 - Legal Advertising - Does It Pay?"
+author: "Nursima Donuk"
+date: "10/15/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Summary:** One partner (A) sued the other (B) over who should pay what share of the expenses of their former partnership. Partner A handled personal injury (PI) cases, while partner B handled only workers’ compensation (WC) cases. The firm’s advertising was focused only on personal injury, but partner A claimed that the ads resulted in the firm getting more workers’ compensation cases for partner B, and therefore that partner B should share the advertising expenses.
+
+
+## Setting Up
+```{r}
+# Set working directory
+# setwd("Desktop")
+
+# Load data
+load("LEGALADV.Rdata")
+head(LEGALADV)
+```
+
+We see that our data has some missing values in the ADVEXP6 column.
+
+## Handling Missing Data
+
+```{r}
+newdata <- LEGALADV[7:48,]
+
+# See first few entries of data
+head(newdata)
+```
+
+## Getting Familiar with the Data
+
+```{r}
+str(newdata)
+summary(newdata)
+```
+
+
+## Packages
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(tidyverse)
+```
+
+
+## Bar Plots
+
+```{r, figures-side, fig.show="hold", out.width="50%", echo=FALSE}
+barplot(newdata$TOTADV,
+        main = "Total Advertising Expenses per Month",
+        xlab = "Month",
+        ylab = "Expenses",
+        names.arg = newdata$MONTH,
+        col = "coral2")
+
+barplot(newdata$NEWPI,
+        main = "New PI Cases per Month",
+        xlab = "Month",
+        ylab = "New PI Cases",
+        names.arg = newdata$MONTH,
+        col = "deepskyblue1")
+```
+
+
+
+```{r, figures-side2, fig.show="hold", out.width="50%", echo=FALSE}
+barplot(newdata$NEWWC,
+        main = "New WC Cases per Month",
+        xlab = "Month",
+        ylab = "New PI Cases",
+        names.arg = newdata$MONTH,
+        col = "springgreen3")
+
+barplot(newdata$ADVEXP6,
+        main = "Cumulative Spending per Month",
+        xlab = "Month",
+        ylab = "6-Month Cumulative Spending",
+        names.arg = newdata$MONTH,
+        col = "deeppink")
+```
+
+
+
+## The Models
+
+Linear model for new personal injury cases vs cumulative 6-month advertising expenditures. Result: **NEWPI = 7.7675 + 0.1129(ADVEXP6)**
+
+```{r}
+PI_lm <- lm(formula = NEWPI ~ ADVEXP6, data = newdata)
+coefficients(PI_lm)
+```
+
+Linear model for new workers compensation cases vs cumulative 6-month advertising expenditures. Result: **NEWWC = 24.5741 + 0.0098(ADVEXP6)**
+
+```{r}
+WC_lm <- lm(formula = NEWWC ~ ADVEXP6, data = newdata)
+coefficients(WC_lm)
+```
+
+## Descriptive Analysis: NEWPI vs ADVEXP6
+
+Below is a scatter-plot for new personal injury cases vs. cumulative 6-month advertising expenditures.
+
+```{r, warning=FALSE, message=FALSE}
+ggplot(newdata, aes(ADVEXP6, NEWPI)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  coord_cartesian() +
+  theme_bw() +
+  ggtitle("Linear Plot of New PI Cases vs AdvExp6") +
+  xlab("6-Month Cumulative Spending") +
+  ylab("Number of New PI Cases")
+```
+
+```{r}
+cor(newdata$ADVEXP6, newdata$NEWPI, method = "pearson")
+summary(PI_lm)
+confint(PI_lm, level = 0.95)
+```
+
+### Summary of Results:
+**Pearson Correlation:** 0.538532, implies a moderate positive linear relation between cumulative 6-month advertising expenditures and new personal injury cases.
+
+**Coefficient of Determination:** $r^2 =$ 0.29, means that the sum of squares deviations of the y values (new PI cases) about their predicted values has been reduced 29% by using the least squares line equation, instead of $\bar{y}$, to predict y. A more practical interpretation can be, 29% of the sample variation in new PI cases can be explained by the linear relationship between cumulative 6-month advertising expenditures and new PI cases.
+
+**Estimated Slope:** $\beta_1 = 0.11289$
+
+**95% Confidence Interval for Slope:** [0.05644618, 0.169336], we can observe that this confidence interval for the slope of the regression line ranges from two positive numbers. Therefore does not include 0.
+
+## Descriptive Analysis: NEWWC vs ADVEXP6
+
+Below is a scatter-plot for new workers compensation cases vs. cumulative 6-month advertising expenditures.
+
+```{r, warning=FALSE, message=FALSE}
+ggplot(newdata, aes(ADVEXP6, NEWWC)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  coord_cartesian() +
+  theme_bw() +
+  ggtitle("Linear Plot of New WC Cases vs AdvExp6") +
+  xlab("6-Month Cumulative Spending") +
+  ylab("Number of New WC Cases")
+```
+
+```{r}
+cor(newdata$ADVEXP6, newdata$NEWWC, method = "pearson")
+summary(WC_lm)
+confint(WC_lm, level = 0.95)
+```
+
+### Summary of Results:
+**Pearson Correlation:** 0.05583758, implies that a linear relationship does not exist between cumulative 6-month advertising expenditures and new workers compensation cases.
+
+**Coefficient of Determination:** $r^2 =$ 0.003118, means that the sum of squares deviations of the y values (new WC cases) about their predicted values has been reduced 0.3% by using the least squares line equation, instead of $\bar{y}$, to predict y. A more practical interpretation can be, 0.3% of the sample variation in new WC cases can be explained by the linear relationship between cumulative 6-month advertising expenditures and new WC cases.
+
+**Estimated Slope:** $\beta_1 = 0.009825$
+
+**95% Confidence Interval for Slope:** [-0.04631528, 0.06596496], we can observe that this confidence interval for the slope of the regression line ranges from a negative number to a positive number, which means that the interval contains 0. Therefore, there is no statistical evidence of a linear relationship.
+
+## Testing the Models
+
+To formally test the models, we conduct the hypothesis tests for the slopes of the regression lines:
+
+```{r}
+pval_PI <- summary(PI_lm)$coefficient[,"Pr(>|t|)"][2]
+pval_PI
+
+pval_WC <- summary(WC_lm)$coefficient[,"Pr(>|t|)"][2]
+pval_WC
+```
+
+The two-tailed p-values for testing the null hypothesis, $H_0:\beta_1 = 0$, are p-value = .0002 for number of new PI cases and p-value = .725 for number of new WC cases. For the number of new personal injury cases, there is sufficient evidence to reject $H_0$  (at $\alpha = .01$) and conclude that number of new PI cases is linearly related to cumulative 6-month advertising expenditures. In contrast, for the number of worker’s compensation cases, there is insufficient evidence to reject $H_0$ (at $\alpha = .01$); thus, there is no evidence of a linear relationship between number of new WC cases and cumulative 6-month advertising expenditures.
+
+## Conclusion
+
+This statistical analysis supports the conclusion that cumulative 6-month advertising expenditures is a statistically useful linear predictor of number of new personal injury cases, but not a useful linear predictor of number of new workers’ compensation cases. \
+
+
+In court, a statistician presented the above results in support of the defendant (partner B). Clearly, the descriptive and inferential statistics provide support for the hypothesis that increased advertising expenditures are associated with more personal injury cases, but not with more workers’ compensation cases. Ultimately, the court ruled that partner A (not partner B) should bear the brunt of the advertising expenditures.
+
+## Research Questions
+
+**Do these data provide support for the hypothesis that increased advertising expenditures are associated with more personal injury cases?**
+
+Yes, these data do not provide support for the hypothesis that increased advertising expenditures are associated with more personal injury cases. We can see from the analysis that there is evidence of a positive linear relationship between advertising expenditures and personal injury cases.
+
+**With more workers’ compensation cases?**
+
+No, these data do not provide support for the hypothesis that increased advertising expenditures are associated with more workers’ compensation cases. We can see from the analysis that there is no evidence of positive linear relationship between advertising expenditures and workers' compensation cases.
+
+
+**If advertising expenditures have a statistically significant association with the number of cases, does this necessarily mean that there is a causal relationship, that is, that spending more on advertising causes an increase in the number of cases?**
+
+No, correlation does not mean causation. Just because two variables are correlated does not mean one causes the other. To look for a causal relationship a thorough experiment has to be conducted.
+
+**Based on these data, should partner A or partner B bear the brunt of the advertising expenditures?**
+
+These data do not support partner A's claim that more advertising caused more workers' compensation cases. There seems to be a more linear and positive relationship between personal injury cases and advertising expenditures. That is the new personal injury cases seem to have increased as the advertising expenditures increased. This is why one may say that partner A should cover the advertising expenditures.
+
+
+## Follow up Questions
+
+**1) Access the data and find the correlation between number of new personal injury cases (y1) and number of new worker’s compensation cases (y2).Which partner (A or B) would benefit from reporting this correlation as evidence in the case? Explain.**
+
+```{r}
+cor(newdata$NEWWC, newdata$NEWPI, method = "pearson")
+``` 
+
+```{r, warning=FALSE, message=FALSE}
+ggplot(newdata, aes(NEWWC, NEWPI)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  coord_cartesian() +
+  theme_bw() +
+  ggtitle("Linear Plot of New PI Cases vs New WC cases") +
+  xlab("Number of New WC Cases") +
+  ylab("Number of New PI Cases")
+```
+
+We see from the correlation of 0.1033978 and observe from the scatter-plot that there is not enough evidence for a linear relationship for NEWWC and NEWPI. This can be beneficial for partner B, since we know that NEWPI has a moderate positive linear relationship with AdvExp6, knowing that there is no evidence supporting linear relationship between NEWPI and NEWWC supports the claim of no positive linear relationship between NEWWC and AdvExp6.
+
+**2)Compare the standard deviations for the simple linear regression models of number of new personal injury cases (y1) and number of new worker’s compensation cases (y2). Which partner (A or B) would benefit from reporting only these standard deviations as evidence in the case? Explain.**
+
+The standard deviations for each simple linear regression model is:
+9.675 for NEWPI and 9.623 for NEWWC. We see that the standard deviations for the models are close. This could benefit partner A because since we see a positive linear relationship between NEWPI and AdvExp6, the close correlation can support A's claim.
+
+**3)Access the data and find the standard deviation for the number of new personal injury cases (y1) and the standard deviation for the number of new worker’s compensation cases (y2). Compare these standard deviations to those you found in question 2. Which partner (A or B) would benefit from reporting this additional information as evidence in the case? Explain.**
+
+```{r}
+sqrt(var(newdata$NEWWC))
+sqrt(var(newdata$NEWPI))
+```
+
+We can see that NEWPI has a greater standard deviation, which is the result of greater variability. The simple linear regression model for NEWPI also had a greater standard deviation. This will benefit partner B since it shows greater variability in the new cases of personal injury, implying that the new personal injury cases increased at a greater amount as the cumulative advertising expenditures increased.
+
+**The End**
